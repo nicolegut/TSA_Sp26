@@ -1,7 +1,7 @@
 ---
 title: "ENV 797 - Time Series Analysis for Energy and Environment Applications | Spring 2026"
 subtitle: "Assignment 1 - Due date 01/15/26"
-author: "Luana"
+author: "Nicole"
 output: pdf_document
 geometry: margin=2.54cm
 ---
@@ -19,7 +19,7 @@ When you have completed the assignment, **Knit** the text and code into a single
 
 Q1. What are your previous experiences with time series analysis, R, and Git? 
 
-> Answer: None
+> Answer: I have used R in statistics courses and research projects throughout undergrad and graduate school. I began using Git during ENV872 and have used it in 710 and my masters project. Time series analysis was introduced in 872, but I do not have any additional experience with it. 
 
 
 Q2. For this part we just want to see the path to your R project. No need to do anything. The output will be automatically generated once you knit you file. 
@@ -32,4 +32,4 @@ getwd()
 
 Q3. Copy and paste the link to your forked repository on Github. It should looks like this: "https://github.com/lmmlima/TSA_Sp26"
 
-> Answer: 
+> Answer: https://github.com/nicolegut/TSA_Sp26.git
