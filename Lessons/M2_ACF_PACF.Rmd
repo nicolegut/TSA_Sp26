@@ -102,7 +102,15 @@ In this course we will also use *autoplot()* which is a ggplot() for time series
 Many of the functions we will use require a time series object. You can transform your data in a time series using the function *ts()*. Only the columns with reservoir inflow data should be transformed, not the ones with month and year. Your ts object is not a data frame, but like I said we will need it as a ts for some function we will explore in future scripts.
 
 ```{r}
-ts_inflow_data <- #####
+ts_inflow_data <- ts(
+  data = inflow_data[,2:4], 
+  start = c(1931, 1),
+  frequency = 12)
+##frequency --> tells R when the data starts to repeat itself
+##ex. monthly data --> frequency is 12 / daily data --> frequency is 365 
+## ts function only works for time series with one source of seasonality
+##annual functions --> frequency would be 1 (bc start date is in years/ tells R that 1931 is the first year)
+
 ts_inflow_data
 
 ```
@@ -117,6 +125,23 @@ autoplot(ts_inflow_data) +
   xlab("Time") +
   ylab("Inflow") +
   labs(color="Reservoir")
+
+##autoplot does not need specific aes --> knows that ts_inflow is a time series/ different columns are series
+##no geom line for each series
+
+
+## can specify series within the ts object to subset the data used in the plots
+autoplot(ts_inflow_data[,1:2]) +
+  xlab("Time") +
+  ylab("Inflow") +
+  labs(color="Reservoir")
+
+##need to specify the series name to have the series argument
+autoplot(ts_inflow_data[,2], series = 'HP2') +
+  xlab("Time") +
+  ylab("Inflow") +
+  labs(color="Reservoir")
+
   
 ```
 
@@ -127,16 +152,50 @@ There are multiple ways to get acf and pacf plots in R. The default package "sta
 
 ```{r acf}
 # Option 1: The function acf() and pacf() is from package "stats"
-HP1_acf=
+HP1_acf= acf(ts_inflow_data[,1], 
+             lag.max = 40,
+             plot = T)
+#40 is luana's general rec
+#other args --> generally will keep defaults/ plot = t is a default
+#if you want partial cors generally will use PACF funct
 
-HP1_pacf=
+##blue dashed lines --> confidence intervals
+## any lags within the lines are virtually equal to zero
+
+
+
+HP1_pacf= pacf(ts_inflow_data[,1], 
+             lag.max = 40,
+             plot = T)
+#influence of t-1 was so strong that coefficient that should be neg was positive?
+#PACF unlike ACF will eventually converge to the confidence interval --> faster than the ACF
+```
+
+```{r}
 
 #Option 2: Computing ACF and PACF with package "forecast"
 
 #The next line will output a plot since we have plot=TRUE and also store the acf values in the object
-HP1_acf=
+HP1_acf= Acf(ts_inflow_data[,1],
+             lag.max = 60)
+##from the forecast package --> uses a capital Acf
+#omits the lag 0 --> lag 0 will always be 1 because correlation with itself
+#nice because sometimes need to count lags --> best not to count lag 0
+#lags in integers --> acf() function will have weird vals sometimes
 
-HP1_pacf=
-  
+HP1_pacf= Pacf(ts_inflow_data[,1], 
+             lag.max = 60,
+             plot = T)
+#with ACF strong correlations up to lag 60 --> PACF deteriorates by lag 12 ish
 ```
+
+Testing HP4 --> changing the data to add one more column
+- an ACF that doesn't go to the negative side of the graph
+- students will argue that might not be seasonal
+- ^ could be that but ALSO could be the that the trend is so strong & overshadows the seasonal component --> still need to investigate and remove the seasonality if found.
+
+ACF and PACF are always stored as values in R
+- can call object --> HP1_acf$acf
+- for PACF --> HP1_pacf$acf 
+- PACF, still stored as acf
 
