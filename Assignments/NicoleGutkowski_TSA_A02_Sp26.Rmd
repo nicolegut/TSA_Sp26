@@ -77,6 +77,8 @@ subset_df = energy_data1[,c("Total Biomass Energy Production",
 
 head(subset_df)
 
+## mutating the date columns?
+
 ```
 
 
@@ -89,6 +91,8 @@ ts_data = ts(
   data = subset_df, 
   start = c(1,1))
 
+
+## specify the date
 
 ```
 
@@ -105,6 +109,10 @@ mean3 = mean(ts_data[,3])
 std1 = sd(ts_data[,1])
 std2 = sd(ts_data[,2])
 std3 = sd(ts_data[,3])
+
+
+#could do the for loop instead for i in [1:3]:
+  #std_series[,i] <- sd(ts_data[,i])
 
 ```
 
@@ -150,6 +158,7 @@ hydro_plot <- ggplot(hydro_data, aes(x=Month,
 
 plot_grid(biomass_plot, hydro_plot, renew_plot, ncol = 1)
 
+#could also use a for loop here
 
 
 
