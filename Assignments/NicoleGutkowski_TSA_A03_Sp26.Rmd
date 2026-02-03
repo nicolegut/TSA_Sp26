@@ -1,7 +1,7 @@
 ---
 title: "ENV 790.30 - Time Series Analysis for Energy Data | Spring 2025"
 subtitle: "Assignment 3 - Due date 02/03/26"
-author: "Student Name"
+author: "Nicole Gutkowski"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -40,8 +40,37 @@ R packages needed for this assignment:"forecast","tseries", and "Kendall". Insta
 
 ```{r}
 #Load/install required package here
+library(forecast)
+library(tseries)
+library(Kendall)
+library(cowplot)
+library(ggplot2)
+library(readxl)
+library(openxlsx)
+library(lubridate)
 
 ```
+
+```{r}
+energy_data1 = 
+  read_xlsx(
+    path ="./Data/Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source.xlsx",
+    skip = 12, sheet="Monthly Data",col_names=FALSE) 
+
+#Now let's extract the column names from row 11
+read_col_names <- 
+  read_excel(
+    path="./Data/Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source.xlsx",
+    skip = 10,n_max = 1, sheet="Monthly Data",col_names=FALSE) 
+
+#Assign the column names to the data set
+colnames(energy_data1) <- read_col_names
+
+#Visualize the first rows of the data set
+head(energy_data1)
+```
+
+
 
 ##Trend Component
 
@@ -49,17 +78,132 @@ R packages needed for this assignment:"forecast","tseries", and "Kendall". Insta
 
 For each series (Total Renewable Production and Hydroelectric Consumption) create three plots arranged in a row (side-by-side): (1) time series plot, (2) ACF, (3) PACF. Use cowplot::plot_grid() to place them in a grid.
 
+```{r}
+
+subset_df = energy_data1[,c("Month", 
+                            "Total Renewable Energy Production", 
+                            "Hydroelectric Power Consumption")]
+subset_df$Month <- as.Date(subset_df$Month)
+
+head(subset_df)
+
+
+ts_data = ts(subset_df[,2:3],frequency=12, start = c(1973,1)) 
+
+
+plot_ts_tren <- autoplot(ts_data[,1]) +
+  labs(title = "Total Renewable Energy Production",
+       x = "Year", y = "Production")
+
+acf_tren  <- Acf(ts_data[,1])
+pacf_tren <- Pacf(ts_data[,1])
+
+plot_acf_tren <- autoplot(acf_tren) + labs(title = "ACF",
+       x = "Lag", y = "ACF")
+plot_pacf_tren <- autoplot(pacf_tren) + labs(title = "PACF",
+       x = "Lag", y = "PACF")
+
+
+plot_ts_hydro <- autoplot(ts_data[,2]) +
+  labs(title = "Hydroelectric Power Consumption",
+       x = "Year", y = "Consumption")
+
+acf_hydro  <- Acf(ts_data[,2])
+pacf_hydro <- Pacf(ts_data[,2])
+
+plot_acf_hydro <- autoplot(acf_tren) + labs(title = "ACF",
+       x = "Lag", y = "ACF")
+plot_pacf_hydro <- autoplot(pacf_tren) + labs(title = "PACF",
+       x = "Lag", y = "PACF")
+
+all_plots <- plot_grid(plot_ts_tren, plot_acf_tren, plot_pacf_tren, plot_ts_hydro, plot_acf_hydro, plot_pacf_hydro, nrow = 2, ncol = 3)
+
+all_plots
+
+
+```
+
+
 ### Q2
 
 From the plot in Q1, do the series Total Renewable Energy Production and Hydroelectric Power Consumption appear to have a trend? If yes, what kind of trend?
+
+```{r}
+"The series Total Renewable Energy Production appears to have an upwards linear trend with potential seasonality. The series Hydroelectric Power Comsumption appears to have a strong seasonal pattern."
+```
+
 
 ### Q3
 
 Use the *lm()* function to fit a linear trend to the two time series. Ask R to print the summary of the regression. Interpret the regression output, i.e., slope and intercept. Save the regression coefficients for further analysis.
 
+```{r}
+#Remove last year by replacing current data frame
+nobs <- nrow(subset_df)
+
+shortened_df <- subset_df[1:(nobs-9),]
+
+
+#Tail again to check if the rows were correctly removed
+tail(shortened_df)
+```
+
+## because the linear regression is not supposed to be a time series object!! So trying to fix the end of the subset df so that the rows go to month 12/ no overlap?
+
+
+```{r}
+
+nobs <- nrow(shortened_df) 
+t <- c(1:nobs)
+
+energy_data = as.data.frame(shortened_df)
+
+
+#linear trend for Total Renew
+linear_trend_tren <- lm(shortened_df[,2]~t)
+#regressing over the time vector just created
+summary(linear_trend_tren)
+
+#store the reg coefficients
+beta1_tren <- as.numeric(linear_trend_tren$coefficients[1]) #intercept
+beta2_tren <- as.numeric(linear_trend_tren$coefficients[2]) #slope
+
+#linear trend for Hydro Power
+linear_trend_hydro <- lm(shortened_df[,3]~t)
+#regressing over the time vector just created
+summary(linear_trend_hydro)
+
+#store the reg coefficients
+beta1_hydro <- as.numeric(linear_trend_hydro$coefficients[1]) #intercept
+beta2_hydro <- as.numeric(linear_trend_hydro$coefficients[2]) #slope
+
+
+
+```
+
+
+
+
 ### Q4
 
 Use the regression coefficients to detrend each series (subtract fitted linear trend). Plot detrended series and compare with the original time series from Q1. Describe what changed.
+
+```{r}
+
+#remove the trend from series
+detrend_inflow_data <- inflow_data[,iHP+1] - (beta1 + beta2*t)
+#subtracting the equation (with the stored coeffs and the t value)
+class(detrend_inflow_data)
+#need to conv from numeric to time series
+
+ts_detrend_inflow <- ts(detrend_inflow_data, frequency = 12, start = c(1931,1))
+#monthly data (freq 12), starts at year 1931, month 1
+
+autoplot(ts_inflow_data[,iHP])+
+  autolayer(ts_detrend_inflow)
+
+```
+
 
 ### Q5
 
