@@ -134,6 +134,8 @@ for(i in 1:nhydro){
 
 ```
 
+None of the series have stochastic trends --> generally linear trends that we could inform with a linear model.
+
 
 ## Trend Component
 
@@ -191,12 +193,12 @@ Note that blue line is our original series, red line is our trend, green line is
 
 ```{r}
 par(mfrow=c(1,2))  #place plot side by side
-Acf(ts_inflow_data[,i],lag.max=40,main=paste("Inflows HP",i,sep="")) 
-Acf(ts_detrend_inflow_data,lag.max=40,main=paste("Inflows HP",i,sep="")) 
+Acf(ts_inflow_data[,iHP],lag.max=40,main=paste("Inflows HP",iHP,sep="")) 
+Acf(ts_detrend_inflow_data,lag.max=40,main=paste("Inflows HP",iHP,sep="")) 
 
 
-Pacf(ts_inflow_data[,i],lag.max=40,main=paste("Inflows HP",i,sep=""))
-Pacf(ts_detrend_inflow_data,lag.max=40,main=paste("Inflows HP",i,sep=""))
+Pacf(ts_inflow_data[,iHP],lag.max=40,main=paste("Inflows HP",iHP,sep=""))
+Pacf(ts_detrend_inflow_data,lag.max=40,main=paste("Inflows HP",iHP,sep=""))
 
 ```
 
@@ -258,9 +260,12 @@ Acf(ts_deseason_inflow_data,lag.max=40,main=paste("Inflows HP",iHP,sep=""))
 Pacf(ts_inflow_data[,iHP],lag.max=40,main=paste(" HP",iHP,sep=""))
 Pacf(ts_deseason_inflow_data,lag.max=40,main=paste("HP",iHP,sep=""))
 ```
-
+Comparing original and deseasoned data
 
 ## Let's change the order of the process, i.e, fit seasonal first and then trend
+## what happens when you do seasonal and then trend!
+## should always do trend and then seasons
+#if there is a trend --> will impact seasons
 
 ```{r}
 #Let's choose same HP
@@ -312,6 +317,7 @@ autoplot(ts_inflow_data[,iHP]) +
     ylab(paste0("Inflow ",colnames(inflow_data)[(1+iHP)],sep=""))
 
 ##Calculating the difference
+## difference between each component
 ts_diff <- ts_deseason_inflow_data-ts_detrend_inflow_data_method2
 autoplot(ts_diff)
 
@@ -328,7 +334,12 @@ Some test only work for non-seasonal data. So let's create another series with y
 iHP <- 1
 #Group data in yearly steps instances
 inflow_data_matrix <- matrix(ts_inflow_data[,iHP],byrow=FALSE,nrow=12)
+#each year is a column
 inflow_data_yearly <- colMeans(inflow_data_matrix)
+#calculating the average by year (matrix columns)
+
+## if you want to run the mann kendall test --> need to remove seasonality
+## converting to a matrix
 
 library(dplyr)  #move this to package chunk later
 my_year <- c(year(first(inflow_data$my_date)):year(last(inflow_data$my_date)))
@@ -360,9 +371,16 @@ summary(SMKtest_fun2)
 
 #Use yearly date to run Mann Kendall
 print("Results of Mann Kendall on average yearly series")
+
+##running mann kendal on yearly dataset and printing the results
 print(summary(MannKendall(inflow_data_yearly)))
 
 ```
+The spearman is less than one/ p value is less than 0.5 --> there is a deterministic trend in the dataset / rejecting null hypothesis. When looking at seasonal data --> might not be an overall trend but could be seasonal trends (colds getting colder and hots getting hotter etc)
+- might cancel out/ not see otherwise
+
+SMK test --> season 1/ season2/ season3 S/ var/ tau/ p values --> to see trends between years for the same month
+
 
 ### Spearman Correlation test 
 
@@ -378,6 +396,10 @@ print(sp_rho)
 sp_rho=cor.test(inflow_data_yearly,my_year,method="spearman")
 print(sp_rho)
 ```
+seasonal mann kendal 
+
+
+
 
 ### Augmented Dickey Fuller (ADF)
 
