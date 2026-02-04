@@ -8,10 +8,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r}
-
-```
-
 ## Directions
 
 You should open the .rmd file corresponding to this assignment on RStudio. The file is available on our class repository on Github.
@@ -95,8 +91,8 @@ plot_ts_tren <- autoplot(ts_data[,1]) +
   labs(title = "Total Renewable Energy Production",
        x = "Year", y = "Production")
 
-acf_tren  <- Acf(ts_data[,1])
-pacf_tren <- Pacf(ts_data[,1])
+acf_tren  <- Acf(ts_data[,1], plot = FALSE)
+pacf_tren <- Pacf(ts_data[,1], plot = FALSE)
 
 plot_acf_tren <- autoplot(acf_tren) + labs(title = "ACF",
        x = "Lag", y = "ACF")
@@ -108,8 +104,8 @@ plot_ts_hydro <- autoplot(ts_data[,2]) +
   labs(title = "Hydroelectric Power Consumption",
        x = "Year", y = "Consumption")
 
-acf_hydro  <- Acf(ts_data[,2])
-pacf_hydro <- Pacf(ts_data[,2])
+acf_hydro  <- Acf(ts_data[,2], plot = FALSE)
+pacf_hydro <- Pacf(ts_data[,2], plot = FALSE)
 
 plot_acf_hydro <- autoplot(acf_tren) + labs(title = "ACF",
        x = "Lag", y = "ACF")
@@ -128,9 +124,7 @@ all_plots
 
 From the plot in Q1, do the series Total Renewable Energy Production and Hydroelectric Power Consumption appear to have a trend? If yes, what kind of trend?
 
-```{r}
-"The series Total Renewable Energy Production appears to have an upwards linear trend with potential seasonality. The series Hydroelectric Power Comsumption appears to have a strong seasonal pattern."
-```
+> Answer: The series Total Renewable Energy Production appears to have an upwards linear trend with potential seasonality. The series Hydroelectric Power Comsumption appears to have a strong seasonal pattern.
 
 
 ### Q3
@@ -157,10 +151,11 @@ nobs <- nrow(shortened_df)
 t <- c(1:nobs)
 
 energy_data = as.data.frame(shortened_df)
+ts_energy_data = ts(energy_data[,2:3],frequency=12, start = c(1973,1))
 
 
 #linear trend for Total Renew
-linear_trend_tren <- lm(shortened_df[,2]~t)
+linear_trend_tren <- lm(shortened_df[[2]]~t)
 #regressing over the time vector just created
 summary(linear_trend_tren)
 
@@ -169,7 +164,7 @@ beta1_tren <- as.numeric(linear_trend_tren$coefficients[1]) #intercept
 beta2_tren <- as.numeric(linear_trend_tren$coefficients[2]) #slope
 
 #linear trend for Hydro Power
-linear_trend_hydro <- lm(shortened_df[,3]~t)
+linear_trend_hydro <- lm(shortened_df[[3]]~t)
 #regressing over the time vector just created
 summary(linear_trend_hydro)
 
@@ -189,25 +184,73 @@ beta2_hydro <- as.numeric(linear_trend_hydro$coefficients[2]) #slope
 Use the regression coefficients to detrend each series (subtract fitted linear trend). Plot detrended series and compare with the original time series from Q1. Describe what changed.
 
 ```{r}
-
-#remove the trend from series
-detrend_inflow_data <- inflow_data[,iHP+1] - (beta1 + beta2*t)
+#Total Renewable
+#remove the trend from series total series
+detrend_tren_data <- shortened_df[[2]] - (beta1_tren + beta2_tren*t)
 #subtracting the equation (with the stored coeffs and the t value)
-class(detrend_inflow_data)
+class(detrend_tren_data)
 #need to conv from numeric to time series
 
-ts_detrend_inflow <- ts(detrend_inflow_data, frequency = 12, start = c(1931,1))
-#monthly data (freq 12), starts at year 1931, month 1
+ts_detrend_tren <- ts(detrend_tren_data, frequency = 12, start = c(1973,1))
+#monthly data (freq 12), starts at year 1973, month 1
 
-autoplot(ts_inflow_data[,iHP])+
-  autolayer(ts_detrend_inflow)
+ts_tren <- ts(shortened_df[,2], frequency = 12, start = c(1973,1))
+
+autoplot(ts_tren)+
+  autolayer(ts_detrend_tren)+
+  labs(y = "Total Renewable Energy Production")
+
+#Hydropower
+#remove the trend from series total series
+detrend_hydro_data <- shortened_df[[3]] - (beta1_hydro + beta2_hydro*t)
+#subtracting the equation (with the stored coeffs and the t value)
+class(detrend_hydro_data)
+#need to conv from numeric to time series
+
+ts_detrend_hydro <- ts(detrend_hydro_data, frequency = 12, start = c(1973,1))
+#monthly data (freq 12), starts at year 1973, month 1
+
+ts_hydro <- ts(shortened_df[,2], frequency = 12, start = c(1973,1))
+
+autoplot(ts_hydro)+
+  autolayer(ts_detrend_hydro)+
+  labs(y = "Hydroelectric Power Comsumption")
 
 ```
+
+The level of the series for each series was dropped to be centered around zero and the increasing trend was removed. 
 
 
 ### Q5
 
 Plot ACF and PACF for the detrended series and compare with the plots from Q1. You may use plot_grid() again to get them side by side to make it easier to compare. Did the plots change? How?
+```{r}
+
+
+#ACF Comp for Total Renewable
+par(mfrow=c(1,2))  #place plot side by side
+Acf(ts_energy_data[,1],lag.max=40,main=paste("ACF Total Renew",sep="")) 
+Acf(ts_detrend_tren,lag.max=40,main=paste("Detrend ACF Total Renew",sep=""))
+
+#PACF Comp for Total Renewable
+par(mfrow=c(1,2))  #place plot side by side
+Pacf(ts_energy_data[,1],lag.max=40,main=paste("PACF Total Renew",sep="")) 
+Pacf(ts_detrend_tren,lag.max=40,main=paste("Detrend PACF Total Renew",sep=""))
+
+#ACF Comp for Hydro
+par(mfrow=c(1,2))  #place plot side by side
+Acf(ts_energy_data[,2],lag.max=40,main=paste("ACF Hydro",sep="")) 
+Acf(ts_detrend_hydro,lag.max=40,main=paste("Detrend ACF Hydro",sep=""))
+
+#PACF Comp for Honest
+par(mfrow=c(1,2))  #place plot side by side
+Pacf(ts_energy_data[,2],lag.max=40,main=paste("PACF Hydro",sep="")) 
+Pacf(ts_detrend_hydro,lag.max=40,main=paste("Detrend PACF Hydro",sep=""))
+
+
+```
+
+For the Total renewable energy ACF plots, a potential seasonal trend was emphasized in the detrended plot. However, ACF remained high with a slow decline, showing strong memory in the series. In the hydroelectric power consumption series, the original and detrended plots appear very similar, indicating that the seasonal component has the greatest influence on the series. 
 
 ## Seasonal Component
 
@@ -217,16 +260,144 @@ Set aside the detrended series and consider the original series again from Q1 to
 
 Just by looking at the time series and the acf plots, do the series seem to have a seasonal trend? No need to run any code to answer your question. Just type in you answer below.
 
-> Answer:
+> Answer: Yes, both series seem like they have a seasonal component due to the yearly oscillations present in their time series. The PACF plots for both series also oscillate around zero. 
 
 ### Q7
 
 Use function *lm()* to fit a seasonal means model (i.e. using the seasonal dummies) to the two time series. Ask R to print the summary of the regression. Interpret the regression output. From the results, which series have a seasonal trend? Do the results match you answer to Q6?
 
+```{r}
+## Total Renewable Deseason Series ####################################
+#dummies
+
+## in assignment --> will remove trend and remove seasonality separately
+dummies_tren <- seasonaldummy(ts_energy_data[,1])
+
+#regress the detrended inflow data as a data frame on the dummies
+seas_means_model_tren <- lm(ts_energy_data[,1]~dummies_tren)
+
+#summary of the regression
+summary(seas_means_model_tren)
+
+
+## Hydro Deseason Series ####################################
+
+#dummies
+
+## in assignment --> will remove trend and remove seasonality separately
+dummies_hydro <- seasonaldummy(ts_energy_data[,2])
+
+#regress the detrended inflow data as a data frame on the dummies
+seas_means_model_hydro <- lm(ts_energy_data[,2]~dummies_hydro)
+
+#summary of the regression
+summary(seas_means_model_hydro)
+
+
+```
+
+For the total renewable energy series, only December has a significant seasonal trend, indicating that seasonality is not a strong component of the behavior of the series and that seasonal trends might occur on an annual basis rather than monthly. For the hydroelectric power series, all months except for February have significant seasonal trends. In Q6, I said that both series would have seasonal trends. However, only the hydroelectric power series has a true seasonal trend.
+
 ### Q8
 
 Use the regression coefficients from Q7 to deseason the series. Plot the deseason series and compare with the plots from part Q1. Did anything change?
 
+```{r}
+## Total Renewable Deseason Series ####################################
+
+#storing the coefficients
+beta_int_tren <- seas_means_model_tren$coefficients[1]
+beta_coeff_tren <- seas_means_model_tren$coefficients[2:12]
+
+
+season_inflow_data_tren <- array(0, nobs)
+
+for (i in 1: nobs){
+  season_inflow_data_tren[i] <- beta_int_tren+beta_coeff_tren %*% 
+    dummies_tren[i,]
+}
+
+
+deseason_data_tren <- energy_data[,2] + season_inflow_data_tren
+
+ts_deseason_tren <- ts(deseason_data_tren, 
+                              start = c(1973,1),
+                              frequency = 12)
+
+ts_season_tren <- ts(season_inflow_data_tren, 
+                start = c(1973,1),
+                frequency = 12)
+
+#plots
+autoplot(ts_tren, series = "Original Data")+
+  autolayer(ts_deseason_tren, series = "Deseason Data")+
+  labs(title = "Total Renewable Energy")
+
+
+## Hydro Deseason Series ####################################
+#storing the coefficients
+beta_int_hydro <- seas_means_model_hydro$coefficients[1]
+beta_coeff_hydro <- seas_means_model_hydro$coefficients[2:12]
+
+
+season_inflow_data_hydro <- array(0, nobs)
+
+for (i in 1: nobs){
+  season_inflow_data_hydro[i] <- beta_int_hydro+beta_coeff_hydro %*% 
+    dummies_hydro[i,]
+}
+
+
+deseason_data_hydro <- energy_data[,3] + season_inflow_data_hydro
+
+ts_deseason_hydro <- ts(deseason_data_hydro, 
+                              start = c(1973,1),
+                              frequency = 12)
+
+ts_season_hydro <- ts(season_inflow_data_hydro, 
+                start = c(1973,1),
+                frequency = 12)
+
+#plots
+autoplot(ts_energy_data[,2], series = "Original Data")+
+  autolayer(ts_deseason_hydro, series = "Deseason Data")+
+  labs(title = "Hydroelectric Power")
+
+
+
+
+```
+For both series, when comparing the deseasoned series with the original series, both the level and range of the oscillations decreased in the deseasoned series. 
+
+
 ### Q9
 
 Plot ACF and PACF for the deseason series and compare with the plots from Q1. You may use plot_grid() again to get them side by side. Did the plots change? How?
+
+
+```{r}
+
+#ACF Comp for Total Renewable
+par(mfrow=c(1,2))  #place plot side by side
+Acf(ts_energy_data[,1],lag.max=40,main=paste("ACF Total Renew",sep="")) 
+Acf(ts_deseason_tren,lag.max=40,main=paste("Deseason ACF Total Renew",sep=""))
+
+#PACF Comp for Total Renewable
+par(mfrow=c(1,2))  #place plot side by side
+Pacf(ts_energy_data[,1],lag.max=40,main=paste("PACF Total Renew",sep="")) 
+Pacf(ts_deseason_tren,lag.max=40,main=paste("Deseason PACF Total Renew",sep=""))
+
+#ACF Comp for Hydro
+par(mfrow=c(1,2))  #place plot side by side
+Acf(ts_energy_data[,2],lag.max=40,main=paste("ACF Hydro",sep="")) 
+Acf(ts_deseason_hydro,lag.max=40,main=paste("Deseason ACF Hydro",sep=""))
+
+#PACF Comp for Honest
+par(mfrow=c(1,2))  #place plot side by side
+Pacf(ts_energy_data[,2],lag.max=40,main=paste("PACF Hydro",sep="")) 
+Pacf(ts_deseason_hydro,lag.max=40,main=paste("Deseason PACF Hydro",sep=""))
+
+
+```
+
+The ACF and PACF plots did not seem to significantly change between the original and deseasoned total renewable energy plots. However, removing the seasonal trend in both the total renewable energy and hydroelectric power PACF plots allows us to visualize the short-term lags having stronger correlations, indicating that removing seasonality helped reveal the underlying non-seasonal behavior of the series.

@@ -147,7 +147,7 @@ t <- c(1:nobs)
 
 #Choose one hydro plant to study, as an exercise try to generalize this routine for all 15 HP
 #from the plot HP4 seems to have a trend so let's play with that column
-iHP=1  #change this to check other HP
+iHP=4  #change this to check other HP
 
 #Fit a linear trend to TS of iHP
 linear_trend_model <- lm(inflow_data[,iHP+1]~t)  
@@ -269,7 +269,7 @@ Comparing original and deseasoned data
 
 ```{r}
 #Let's choose same HP
-iHP=1 
+iHP=4 
 
 #Use seasonal means model
 dummies <- seasonaldummy(ts_inflow_data[,iHP])  
@@ -331,7 +331,7 @@ Note that the two methods are equivalent but there is a slight difference in the
 Some test only work for non-seasonal data. So let's create another series with yearly averages for inflow.
 
 ```{r}
-iHP <- 1
+iHP <- 4
 #Group data in yearly steps instances
 inflow_data_matrix <- matrix(ts_inflow_data[,iHP],byrow=FALSE,nrow=12)
 #each year is a column
@@ -357,7 +357,7 @@ ggplot(inflow_data_new_yearly, aes(x=my_year, y=inflow_data_yearly)) +
 Check for deterministic trend.
 
 ```{r}
-iHP <- 1
+iHP <- 4
 #Since I have seasonal data I cannot use the simple MannKendall()
 #another example of functions that need a ts object
 SMKtest <- SeasonalMannKendall(ts_inflow_data[,iHP])
@@ -376,7 +376,7 @@ print("Results of Mann Kendall on average yearly series")
 print(summary(MannKendall(inflow_data_yearly)))
 
 ```
-The spearman is less than one/ p value is less than 0.5 --> there is a deterministic trend in the dataset / rejecting null hypothesis. When looking at seasonal data --> might not be an overall trend but could be seasonal trends (colds getting colder and hots getting hotter etc)
+The spearman is less than one/ p value is less than 0.05 --> there is a deterministic trend in the dataset / rejecting null hypothesis. When looking at seasonal data --> might not be an overall trend but could be seasonal trends (colds getting colder and hots getting hotter etc)
 - might cancel out/ not see otherwise
 
 SMK test --> season 1/ season2/ season3 S/ var/ tau/ p values --> to see trends between years for the same month
@@ -388,6 +388,7 @@ Also check for deterministic trend, for non-seasonal data only.
 
 ```{r}
 #Deterministic trend with Spearman Correlation Test
+
 print("Results from Spearman Correlation")
 sp_rho=cor(inflow_data_yearly,my_year,method="spearman")
 print(sp_rho)
@@ -396,7 +397,8 @@ print(sp_rho)
 sp_rho=cor.test(inflow_data_yearly,my_year,method="spearman")
 print(sp_rho)
 ```
-seasonal mann kendal 
+if close to 1 --> significant increasing trend
+0.28 --> still signif diff than 0 but not a strong slope
 
 
 
@@ -415,6 +417,13 @@ print("Results for ADF test on yearly data/n")
 print(adf.test(inflow_data_yearly, alternative = "stationary"))
 
 ```
+
+first one: p val 0.01 --> reject null hypothesis/ series has a unit root
+- tells me that there is no stochastic trend
+- saw that there was a deterministic trend from the other tests
+
+Second one: same thing! p val 0.045 ish
+
 
 ##Exercise
 
