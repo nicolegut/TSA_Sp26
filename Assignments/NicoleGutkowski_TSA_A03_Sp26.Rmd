@@ -91,8 +91,8 @@ plot_ts_tren <- autoplot(ts_data[,1]) +
   labs(title = "Total Renewable Energy Production",
        x = "Year", y = "Production")
 
-acf_tren  <- Acf(ts_data[,1], plot = FALSE)
-pacf_tren <- Pacf(ts_data[,1], plot = FALSE)
+acf_tren  <- Acf(ts_data[,1], plot = FALSE, lag.max = 40)
+pacf_tren <- Pacf(ts_data[,1], plot = FALSE,lag.max = 40)
 
 plot_acf_tren <- autoplot(acf_tren) + labs(title = "ACF",
        x = "Lag", y = "ACF")
@@ -104,12 +104,12 @@ plot_ts_hydro <- autoplot(ts_data[,2]) +
   labs(title = "Hydroelectric Power Consumption",
        x = "Year", y = "Consumption")
 
-acf_hydro  <- Acf(ts_data[,2], plot = FALSE)
-pacf_hydro <- Pacf(ts_data[,2], plot = FALSE)
+acf_hydro  <- Acf(ts_data[,2], plot = FALSE, lag.max = 40)
+pacf_hydro <- Pacf(ts_data[,2], plot = FALSE, lag.max = 40)
 
-plot_acf_hydro <- autoplot(acf_tren) + labs(title = "ACF",
+plot_acf_hydro <- autoplot(acf_hydro) + labs(title = "ACF",
        x = "Lag", y = "ACF")
-plot_pacf_hydro <- autoplot(pacf_tren) + labs(title = "PACF",
+plot_pacf_hydro <- autoplot(pacf_hydro) + labs(title = "PACF",
        x = "Lag", y = "PACF")
 
 all_plots <- plot_grid(plot_ts_tren, plot_acf_tren, plot_pacf_tren, plot_ts_hydro, plot_acf_hydro, plot_pacf_hydro, nrow = 2, ncol = 3)
@@ -210,7 +210,7 @@ class(detrend_hydro_data)
 ts_detrend_hydro <- ts(detrend_hydro_data, frequency = 12, start = c(1973,1))
 #monthly data (freq 12), starts at year 1973, month 1
 
-ts_hydro <- ts(shortened_df[,2], frequency = 12, start = c(1973,1))
+ts_hydro <- ts(shortened_df[,3], frequency = 12, start = c(1973,1))
 
 autoplot(ts_hydro)+
   autolayer(ts_detrend_hydro)+
@@ -318,7 +318,7 @@ for (i in 1: nobs){
 }
 
 
-deseason_data_tren <- energy_data[,2] + season_inflow_data_tren
+deseason_data_tren <- energy_data[,2] - season_inflow_data_tren
 
 ts_deseason_tren <- ts(deseason_data_tren, 
                               start = c(1973,1),
@@ -348,7 +348,7 @@ for (i in 1: nobs){
 }
 
 
-deseason_data_hydro <- energy_data[,3] + season_inflow_data_hydro
+deseason_data_hydro <- energy_data[,3] - season_inflow_data_hydro
 
 ts_deseason_hydro <- ts(deseason_data_hydro, 
                               start = c(1973,1),
