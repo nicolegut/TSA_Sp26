@@ -52,7 +52,7 @@ wind_data$DATE <- ym(wind_data$DATE)
 Many of the functions we will use require a time series object. You can transform your data in a time series using the function *ts()*. 
 
 ```{r}
-ts_wind_data <- ts(wind_data$AWND.1,frequency=12) 
+ts_wind_data <- ts(wind_data$AWND.1, start= c(1984, 1), frequency=12) 
 
 autoplot(ts_wind_data) +
   ylab("Average Wind Speed") 
@@ -80,6 +80,20 @@ If you want to handle missing data, but do not want to remove outliers, here are
 
 `forecast::na.interp()`
 `zoo::na.approx()`
+
+
+```{r}
+tail(ts_wind_data)
+
+```
+
+```{r}
+ts_wind_data
+
+#overall 37 years --> observations fill all months for all years
+#a check for if there are missing values/ months in the time series
+#if there were missing values --> then the data for the months would be pushed into other months + not fill up the rows like they are supposed to. 
+```
 
 
 

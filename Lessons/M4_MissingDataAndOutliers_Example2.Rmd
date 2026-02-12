@@ -88,6 +88,10 @@ for(i in 1:nhydro){
         )
 }
 
+## two methods for looking at outliers in the data --> can plot histograms/ box and whisker
+## then can see the distributions are from a log normal distribution
+## will never have observations that are negative/ only really high
+
 ```
 
 Note from the plots that some reservoirs have many points outside the box. But it's hard to tell if those are outliers or not because we are looking at the time series with all its components. The idea is to first remove any seasonality and trend in the data, and then find outliers in the remainder series.
@@ -98,6 +102,11 @@ Note from the plots that some reservoirs have many points outside the box. But i
 The stats package has a function called decompose(). This function only take time series object. As the name says the decompose function will decompose your time series into three components: trend, seasonal and random. This is similar to what we did in the previous script, but in a more automated way. 
 
 The random component is the time series without seasonal and trend component. Let's try to identify outliers by looking at the random component only.
+
+Series with seasonality/ strong trends --> need to remove first before outlier removal
+- because seasonal outliers need to be compared with seasonal means not the overall mean 
+    - overall mean would be too conservative of a metric for outliers
+- strong increasing/ decreasing trend --> mean of the series wold have the same issues. 
 
 ```{r}
 #Using R decompose function
@@ -121,6 +130,17 @@ cat(mean_inflow,sd_inflow)
 
 ```
 
+```{r}
+# decompose function uses the moving average for the trend
+# seasonal component is the same is the seasonal means model
+# can just deseason a series through subtracting the seasonal component from the series
+# CANNOT do that with the trend though --> still need to fit a linear model
+
+# when series does not have a seasonal component --> seasonal component will look incredibly messy/ not work
+```
+
+
+
 ## Missing observations
 
 The decompose function introduced NAs in the beginning and end of the data set. Let's just remove them. NAs on the tails can be simply removed.
@@ -128,6 +148,8 @@ The decompose function introduced NAs in the beginning and end of the data set. 
 ```{r}
 #Create data frame for further use with new random series
 df_inflow_random <- data.frame(date=my_date,month=as.factor(month(my_date)),inflow=as.numeric(inflow_random))
+
+#has date column and random inflow part
 
 #How many NAs we have, you can get it from summary or using is.na()
 sum(is.na(df_inflow_random$inflow))
@@ -145,7 +167,11 @@ head(df_inflow_random,10)
 tail(df_inflow_random,10)
 
 ```
-Data is ready!
+Data is ready! Will have 6 NA's in the front and the end of the trend series, because order 12 moving average needs at least 6 points in front and behind the average. Because the trend series has lost values --> the random component will also lose values.
+
+Need to exclude values using na.omit
+
+> Answer: Why are values so low for the random series --> calculating mean/ stdev of the random component. Random has seasonal and trend already removed from the original series, so the series should be close to zero. 
 
 ## Visualizing outliers in R
 
@@ -161,6 +187,11 @@ ggplot(df_inflow_random, aes(x=date, y=inflow)) +
 
 ggplot(df_inflow_random, aes(y=inflow)) +
             geom_boxplot() 
+
+
+## adding the +- 3 std around the mean lines in the plot --> to see if there are outliers
+## if values fall outside of the 3std, might need to remove outliers
+## could use the ts_clean to remove outliers.
 ```
 
 Since we removed the seasonal and trend component, the mean of the random series should be close to zero. Note that from the line plot with the red lines we see that we do have some outliers. The outliers could be due to error collecting the data or an extreme event. Either way, we may want to remove/replace them before fitting a model to our data set to avoid the effect of outliers on our model coefficients. 
@@ -206,6 +237,8 @@ print(chi_test)
 #If you need to remove outlier use rm.outlier()
 df_inflow_random$inflow <- rm.outlier(df_inflow_random$inflow,fill=TRUE) #using fill equal true the value will be replaced by mean or median 
 #Since we removed seasonality replacing with overall mean instead of local mean is acceptable
+#on a seasonal dataset --> should replace with the local mean
+# ts_clean function will do this for all outliers --> probably better to do manually/ don't remove too many
 
 #Plot series again and look for more outliers
 ggplot(df_inflow_random, aes(x=date, y=inflow)) +

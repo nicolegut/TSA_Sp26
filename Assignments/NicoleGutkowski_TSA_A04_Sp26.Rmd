@@ -102,6 +102,7 @@ Try differencing at lag 1 only once, i.e., make `lag=1` and `differences=1`. Plo
 ts_data = ts(cleaned_df[,2],frequency=12, start = c(1973,1)) 
 
 ts_diff = diff(ts_data, lag = 1, differences = 1)
+#generally will difference lag 1 or lag 12 --> 12 will be removing seasonal changes
 
 autoplot(ts_diff, series = "Differenced")+
   autolayer(ts_data, series = "Original")+
@@ -186,7 +187,7 @@ Acf(ts_diff,lag.max=40,main=paste("Differenced Total Renew ACF",sep=""), ylim=c(
 
 ```
 
-> Answer: The differencing method was more efficient in eliminating the trend for the series. While detrending the series did slightly drop the ACF values and reveal possible seasonal patterns through minor spikes at the 12, 24, and 36 lag distances, the differenced series has much lower ACF values almost immediately and the potential seasonal pattern is indicated through clear spikes at the 12, 24, and 36 lag distances. 
+> Answer: The differencing method was more efficient in eliminating the trend for the series. While detrending the series did slightly drop the ACF values and reveal possible seasonal patterns through minor spikes at the 12, 24, and 36 lag distances, the differenced series has much lower ACF values almost immediately and the potential seasonal pattern is indicated through clear spikes at the 12, 24, and 36 lag distances. Differencing the series completely removes the slow decay of the ACF, completely removing the stochastic/ deterministic trend in the series. 
 
 ### Q5
 Compute the Seasonal Mann-Kendall and ADF Test for the original "Total Renewable Energy Production" series. Ask R to print the results. Interpret the results for both test. What is the conclusion from the Seasonal Mann Kendall test? What's the conclusion for the ADF test? Do they match what you observed in Q3 plot? Recall that having a unit root means the series has a stochastic trend. And when a series has stochastic trend we need to use differencing to remove the trend.
@@ -199,6 +200,8 @@ print("Results for Seasonal Mann Kendall /n")
 print(summary(SMKtest))
 
 
+
+
 #ADF test
 #Null hypothesis is that data has a unit root
 print("Results for ADF test/n")
@@ -208,6 +211,9 @@ print(adf.test(ts_data,alternative = "stationary"))
 ```
 
 > Answer: The seasonal Mann Kendall test shows a significant upwards trend with a tau value of 0.793 and a p-value less than 0.05. From the ADF test, we fail to reject that null hypothesis that the series has a unit root, indicating that the series is non-stationary and follows a stochastic trend. 
+
+>From Luana Discussion: SMK --> p value is less than .05 --> reject null hypothesis/ 
+> ADF test --> accepting null hypothesis --> data has a unit root --> need to difference series
 
 ### Q6
 Aggregate the original "Total Renewable Energy Production" series by year. You can use the same procedure we used in class. Store series in a matrix where rows represent months and columns represent years. And then take the columns mean using function colMeans(). Recall the goal is the remove the seasonal variation from the series to check for trend. Convert the accumulates yearly series into a time series object and plot the series using autoplot().
@@ -262,3 +268,9 @@ print(adf.test(new_year_data$data_yearly_matrix,alternative = "stationary"))
 ```
 
 > Answer: Both the Mann Kendall and Spearman tests indicate that there is a significant strong increasing trend in the series. Both tests have p-values of less than 0.05 and a tau and rho of 0.817 and 0.921 respectively. The ADF test p value of 0.95 indicates that we cannot reject the null-hypothesis that the series is non-stationary. These results suggest that the series has a strong increasing, non-stationary trend. These findings are consistent with the results in Q5. 
+
+> MK --> data follow a trend/ Spear --> data follow a trend
+> ADF --> cannot reject null hyp --> trend is stochastic/ data has a unit root --> need to difference
+
+
+
