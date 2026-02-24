@@ -1,6 +1,6 @@
 ---
-title: "ENV 797 - Time Series Analysis for Energy and Environment Applications | Spring 2025"
-subtitle: "Assignment 6 - Due date 02/27/25"
+title: "ENV 797 - Time Series Analysis for Energy and Environment Applications | Spring 2026"
+subtitle: "Assignment 6 - Due date 02/27/26"
 author: "Student Name"
 output: pdf_document
 geometry: margin=2.54cm
@@ -10,7 +10,7 @@ geometry: margin=2.54cm
 
 You should open the .rmd file corresponding to this assignment on RStudio. The file is available on our class repository on Github.
 
-Once you have the file open on your local machine the first thing you will do is rename the file such that it includes your first and last name (e.g., "LuanaLima_TSA_A06_Sp25.Rmd"). Then change "Student Name" on line 4 with your name.
+Once you have the file open on your local machine the first thing you will do is rename the file such that it includes your first and last name (e.g., "LuanaLima_TSA_A06_Sp26.Rmd"). Then change "Student Name" on line 4 with your name.
 
 Then you will start working through the assignment by **creating code and output** that answer each question. Be sure to use this assignment document. Your report should contain the answer to each question and any plots/tables you obtained (when applicable).
 
