@@ -1,7 +1,7 @@
 ---
 title: "ENV 797 - Time Series Analysis for Energy and Environment Applications | Spring 2025"
-subtitle: "Assignment 6 - Due date 02/27/25"
-author: "Student Name"
+subtitle: "Assignment 6 - Due date 02/27/26"
+author: "Nicole Gutkowski"
 output: pdf_document
 geometry: margin=2.54cm
 ---
@@ -26,8 +26,10 @@ library(tseries)
 library(ggplot2)
 library(Kendall)
 library(lubridate)
-library(tidyverse)  #load this package so yon clean the data frame using pipes
+library(tidyverse)
 library(readxl)
+library(sarima)
+library(cowplot)
 
 ```
 
@@ -61,10 +63,12 @@ Model_01 <- arima.sim(list(order = c(0,0,1), ma = 0.9), n = 100)
 
 Model_11 <- arima.sim(list(order = c(1,0,1), ar = 0.6, ma = 0.9), n = 100)
 
-plot_grid(
-  autoplot(Model_10),
-  autoplot(Model_01),
-  autoplot(Model_11))
+
+m10 <- autoplot(Model_10)
+m01 <- autoplot(Model_01)
+m11 <- autoplot(Model_11)
+
+plot_grid(m10, m01, m11)
 
 
 ```
@@ -74,10 +78,12 @@ plot_grid(
 
 ```{r}
 
-plot_grid(
-  autoplot(Acf(Model_10)),
-  autoplot(Acf(Model_01)),
-  autoplot(Acf(Model_11)))
+
+acf_m10<- autoplot(Acf(Model_10, plot = FALSE))
+acf_m01 <- autoplot(Acf(Model_01, plot = FALSE))
+acf_m11 <- autoplot(Acf(Model_11, plot = FALSE))
+
+plot_grid(acf_m10, acf_m01, acf_m11)
 
 ```
 
@@ -85,20 +91,21 @@ plot_grid(
 
 ```{r}
 
-plot_grid(
-  autoplot(Pacf(Model_10)),
-  autoplot(Pacf(Model_01)),
-  autoplot(Pacf(Model_11)))
+pacf_m10<- autoplot(Pacf(Model_10, plot = FALSE))
+pacf_m01 <- autoplot(Pacf(Model_01, plot = FALSE))
+pacf_m11 <- autoplot(Pacf(Model_11, plot = FALSE))
+
+plot_grid(pacf_m10, pacf_m01, pacf_m11)
 
 ```
 
 (d) Look at the ACFs and PACFs. Imagine you had these plots for a data set and you were asked to identify the model, i.e., is it AR, MA or ARMA and the order of each component. Would you be able identify them correctly? Explain your answer.
 
-> Answer:
+> Answer: For the series Model_10 and Model_11, the exponential decay of the ACF indicates that the model has an AR component. The 1 significant lag in the PACF for Model_10 indicates that the series is a first order AR process. For Model_11, there are 2 significant lags in the PACF, however the PACF also appears to have an exponential decay pattern, indicating a potential MA component. For the series Model_01, the ACF cutting off and the exponential decay in the PACF indicates the series has an MA process. The 1 significant lag in the ACF of Model_01 indicates the series is a first order MA process. Truthfully, I may have been able to identify the Model_01 (MA(1)) and Model_10 (AR(1)) series correctly, however I most likely would have mis-identified Model_11 as ARMA(2,1).
 
 (e) Compare the PACF values R computed with the values you provided for the lag 1 correlation coefficient, i.e., does $\phi=0.6$ match what you see on PACF for ARMA(1,0), and ARMA(1,1)? Should they match?
 
-> Answer:
+> Answer: The PACF value for the lag 1 coefficient matched the value provided for the ARMA(1,0), but not the ARMA(1,1). This is because the MA component in the ARMA(1,1) most likely increased the correlation for the first lag in the PACF.
 
 (f) Increase number of observations to $n=1000$ and repeat parts (b)-(e).
 
@@ -120,15 +127,15 @@ plot_grid(
 
 #plotting the ACFs
 plot_grid(
-  autoplot(Acf(Model_10_n1k)),
-  autoplot(Acf(Model_01_n1k)),
-  autoplot(Acf(Model_11_n1k)))
+  autoplot(Acf(Model_10_n1k, plot = FALSE)),
+  autoplot(Acf(Model_01_n1k, plot = FALSE)),
+  autoplot(Acf(Model_11_n1k, plot = FALSE)))
 
 #plotting the PACFs
 plot_grid(
-  autoplot(Pacf(Model_10_n1k)),
-  autoplot(Pacf(Model_01_n1k)),
-  autoplot(Pacf(Model_11_n1k)))
+  autoplot(Pacf(Model_10_n1k, plot = FALSE)),
+  autoplot(Pacf(Model_01_n1k, plot = FALSE)),
+  autoplot(Pacf(Model_11_n1k, plot = FALSE)))
 
 
 ```
@@ -139,7 +146,12 @@ Consider the ARIMA model $y_t=0.7*y_{t-1}-0.25*y_{t-12}+a_t-0.1*a_{t-1}$
 
 (a) Identify the model using the notation ARIMA$(p,d,q)(P,D,Q)_ s$, i.e., identify the integers $p,d,q,P,D,Q,s$ (if possible) from the equation.
 
+>Answer 3a: ARIMA(1,0,1)(1,0,0)[12]
+
 (b) Also from the equation what are the values of the parameters, i.e., model coefficients.
+
+>Answer 3b: The AR term coefficient value is 0.7, the MA term coefficient value is -0.1, and the SAR term coefficient value is -0.25.
+
 
 ## Q4
 
@@ -148,7 +160,18 @@ series using `autoplot()`. Does it look seasonal?
 
 ```{r}
 
+model_01_10 <- sim_sarima(
+  model = list(ma = 0.5,
+               sar = 0.8,
+               nseasons = 12),n = 1000)
+
+model_01_10_ts <- ts(model_01_10, frequency = 12)
+
+autoplot(model_01_10_ts)
+
 ```
+
+> Answer: The plot does look seasonal. There is a general oscillating pattern in the plot that indicates the presence of seasonality.
 
 ## Q5
 
@@ -156,4 +179,16 @@ Plot ACF and PACF of the simulated series in Q4. Comment if the plots are well r
 
 ```{r}
 
+acf <- autoplot(Acf(model_01_10_ts, lag.max = 40, plot = FALSE))
+pacf <- autoplot(Pacf(model_01_10_ts, lag.max = 40, plot = FALSE))
+
+plot_grid(acf, pacf)
+
+
+
 ```
+
+> Answer: From the ACF and PACF plots of the simulated series, it would be possible to tell the order of the seasonal and non-seasonal components. Spikes in the ACF at 12, 24, and 36 as well as a single spike at lag 12 in the PACF indicate this series has an SAR term, or P = 1. The ACF cutting off instead of exponentially decaying indicates that the series has an MA term, and the single significant positive lag in the ACF indicates the order of the moving average component is first order, or q = 1.
+
+
+

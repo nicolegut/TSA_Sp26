@@ -289,6 +289,9 @@ compare_aic <- data.frame(compare_aic,Model_212$aic)
 
 #Let's check AIC
 print(compare_aic)
+
+## the 212 model has a lower AIC value --> but coefficients are very close to 1/ -1
+## coefs close to abs(1) can indicate covariance
 ```
 
 ## Automatically fitting ARIMA
@@ -296,6 +299,8 @@ print(compare_aic)
 Now that you have played with different order, let's try the auto.arima() function from the base package *stats*. The best fit for this time series is a ARIMA(2,1,2) with drift.
 
 ```{r}
+
+
 
 
 

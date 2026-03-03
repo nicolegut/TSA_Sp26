@@ -339,6 +339,7 @@ If you don't differenciate the series, i.e., if you input the non-stationarity s
 #Model_101 <- Arima(deseasonal_residential_price,order=c(1,0,1))
 #print(Model_101)
 #compare_aic <- data.frame(compare_aic,Model_101$aic)
+#will give you the error: Error in stats::arima(x = x, order = order, seasonal = seasonal, include.mean = include.mean,  : non-stationary AR part from CSS
 
 Model_101_diff=Arima(deseasonal_residential_price_diff,order=c(1,0,1))
 print(Model_101_diff)
@@ -346,6 +347,9 @@ print(Model_101_diff)
 compare_aic <- data.frame(compare_aic,Model_101_diff$aic)
 
 print(compare_aic)
+
+## can only compare models when fitting the same time series to them!
+## because the dataset is different --> cannot compare aic's
 
 ```
 Note that AIC is worse for the ARIMA(1,0,1) with the non-difference series.
@@ -379,5 +383,6 @@ cowplot::plot_grid(Plot1,Plot2,Plot3,Plot4,nrow=2)
 ```
 
 Note that this is still non-seasonal data. If you want to compare to the original series with seasonality, you need to add seasonal component back to the ARIMA fit.
+** adding the seasonal component back to the observed and the ARIMA series
 
 
