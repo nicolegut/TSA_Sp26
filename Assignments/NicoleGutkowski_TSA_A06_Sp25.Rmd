@@ -56,12 +56,18 @@ Recall that the non-seasonal ARIMA is described by three parameters ARIMA$(p,d,q
 ```{r}
 
 Model_10 <- arima.sim(list(order = c(1,0,0), ar = 0.6), n = 100)
+#corrections in commented out: 
+#Model_1 <- arima.sim(model = list(ar = 0.6), n = 100)
 
 
 Model_01 <- arima.sim(list(order = c(0,0,1), ma = 0.9), n = 100)
 
+#Model_1 <- arima.sim(model = list(ma = 0.6), n = 100)
+
 
 Model_11 <- arima.sim(list(order = c(1,0,1), ar = 0.6, ma = 0.9), n = 100)
+
+#Model_1 <- arima.sim(model = list(ar = 0.6, ma = 0.9), n = 100)
 
 
 m10 <- autoplot(Model_10)
@@ -82,6 +88,7 @@ plot_grid(m10, m01, m11)
 acf_m10<- autoplot(Acf(Model_10, plot = FALSE))
 acf_m01 <- autoplot(Acf(Model_01, plot = FALSE))
 acf_m11 <- autoplot(Acf(Model_11, plot = FALSE))
+#for the ACF if you can't tell if it is one spike that denotes the order or if it's tailing off --> will generally have a mix of components
 
 plot_grid(acf_m10, acf_m01, acf_m11)
 
@@ -93,7 +100,9 @@ plot_grid(acf_m10, acf_m01, acf_m11)
 
 pacf_m10<- autoplot(Pacf(Model_10, plot = FALSE))
 pacf_m01 <- autoplot(Pacf(Model_01, plot = FALSE))
+#in absolute value --> PACF is tailing off
 pacf_m11 <- autoplot(Pacf(Model_11, plot = FALSE))
+#in absolute value --> PACF is tailing off too
 
 plot_grid(pacf_m10, pacf_m01, pacf_m11)
 
@@ -106,6 +115,8 @@ plot_grid(pacf_m10, pacf_m01, pacf_m11)
 (e) Compare the PACF values R computed with the values you provided for the lag 1 correlation coefficient, i.e., does $\phi=0.6$ match what you see on PACF for ARMA(1,0), and ARMA(1,1)? Should they match?
 
 > Answer: The PACF value for the lag 1 coefficient matched the value provided for the ARMA(1,0), but not the ARMA(1,1). This is because the MA component in the ARMA(1,1) most likely increased the correlation for the first lag in the PACF.
+## for autoregressive models --> the coefficient is the value of the PACF
+## for moving average models --> PACF/ ACF only tells you about the order/ behavior
 
 (f) Increase number of observations to $n=1000$ and repeat parts (b)-(e).
 
@@ -148,6 +159,8 @@ Consider the ARIMA model $y_t=0.7*y_{t-1}-0.25*y_{t-12}+a_t-0.1*a_{t-1}$
 
 >Answer 3a: ARIMA(1,0,1)(1,0,0)[12]
 
+>Since we do not see a constant value --> series either has a zero mean already, or the series is already differenced. So could have a differencing term but hard to tell. If there was a constant term --> the series has definitely not been differenced.
+
 (b) Also from the equation what are the values of the parameters, i.e., model coefficients.
 
 >Answer 3b: The AR term coefficient value is 0.7, the MA term coefficient value is -0.1, and the SAR term coefficient value is -0.25.
@@ -179,8 +192,8 @@ Plot ACF and PACF of the simulated series in Q4. Comment if the plots are well r
 
 ```{r}
 
-acf <- autoplot(Acf(model_01_10_ts, lag.max = 40, plot = FALSE))
-pacf <- autoplot(Pacf(model_01_10_ts, lag.max = 40, plot = FALSE))
+acf <- autoplot(Acf(model_01_10_ts, lag.max = 60, plot = FALSE))
+pacf <- autoplot(Pacf(model_01_10_ts, lag.max = 60, plot = FALSE))
 
 plot_grid(acf, pacf)
 
