@@ -129,15 +129,32 @@ These three function take a few main arguments:
 
 ```{r}
 #Model 1: Arithmetic mean on original data
+mean_seas <- meanf(ts_electricity_price[,"All.sectors"], h = 36)
 
+summary(mean_seas)
+
+plot(mean_seas)
+#^what you DO NOT want to see
 
 #Model 2: Arithmetic mean on deseas data
+mean_deseas <- meanf(deseasonal_allsectors_price, h = 36)
 
+plot(mean_deseas)
 
 #Model 3: Seasonal naive on original data
+naive_seas <- snaive(ts_electricity_price[,"All.sectors"], h = 36)
+
+plot(naive_seas)
+#^ will only repeat what happened in the last year with increasing CI intervals
+#^^will not consider trend
 
 
 #Model 4: Naive on deseas data
+naive_deseas <- naive(deseasonal_allsectors_price, h = 36)
+
+plot(naive_deseas)
+#will not worry about seasonality and will just plot the last value over and over
+
 
 
 ```
@@ -170,6 +187,10 @@ We will try these models on the original dataset and the deaseason electricity p
 
 ```{r}
 # Model 5: Simple moving average on deseasonal data
+SMA_deseas <- smooth::sma(deseasonal_allsectors_price, h = 36, holdout = FALSE, silent =  FALSE)
+
+summary(SMA_deseas)
+
 
 
 # Model 6: Simple moving average on original data
