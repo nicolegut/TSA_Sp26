@@ -1,7 +1,7 @@
 ---
 title: "ENV 797 - Time Series Analysis for Energy and Environment Applications | Spring 2026"
-subtitle: "Assignment 7 - Due date 03/06/26"
-author: "Student Name"
+subtitle: "Assignment 7 - Due date 03/19/26"
+author: "Nicole Gutkowski"
 output: pdf_document
 geometry: margin=2.54cm
 ---
@@ -90,6 +90,9 @@ plot_grid(ts_plot, ts_acf, ts_pacf)
 
 ```
 
+
+
+
 ## Modeling the seasonally adjusted (i.e., the deseasonalized series)
 
 ### Q3
@@ -97,8 +100,15 @@ plot_grid(ts_plot, ts_acf, ts_pacf)
 Run the ADF test and Mann Kendall test on the deseasonalized data from Q2. Report and explain the results.
 
 ```{r}
+print((adf.test(natgas_deseas,alternative="stationary")))
+
+print(MannKendall(natgas_deseas))
+
 
 ```
+
+> Answer: The significant p-value (p < 0.01) from the ADF test indicates that the deseasonalized natural gas data is stationary. The Mann-Kendall test indicates the series has a strong and significant positive trend (tau = 0.843, p < 0.001). This means that even though the seasonality has been removed, there is still a clear upward trend in the data.
+
 
 ### Q4
 
@@ -106,13 +116,25 @@ Using the plots from Q2 and test results from Q3 identify the ARIMA model parame
 
 ```{r}
 
+Model_100 <- Arima(natgas_deseas,order=c(1,0,0),include.drift=TRUE)
+print(Model_100)
+
+
 ```
+
+> Because the series is stationary, as indicated by the ADF test, the series should not be differenced (d = 0). In the plots from Q2, the ACF has a slow decay, while the PACF cuts off after one spike. These patterns in the ACF and PACF indicate that there is a autoregressive component in the series. The PACF cutting off after one spike indicates that the order of the AR component is 1 (p = 1).
+
+
 
 ### Q5
 
 Use `Arima()` from package "forecast" to fit an ARIMA model to your series considering the order estimated in Q4. You should allow constants in the model, i.e., `include.mean = TRUE` or `include.drift=TRUE`. **Print the coefficients** in your report. Hint: use the `cat()` or `print()` function to print.
 
 ```{r}
+
+Model_100 <- Arima(natgas_deseas,order=c(1,0,0),include.drift=TRUE)
+print(Model_100)
+
 
 ```
 
@@ -122,13 +144,50 @@ Now plot the residuals of the ARIMA fit from Q5 along with residuals ACF on the 
 
 ## Modeling the original series (with seasonality)
 
+```{r}
+
+checkresiduals(Model_100)
+
+
+```
+
+> Answer: While the residuals appear to generally resemble a white noise series, the results of the Ljung-box test show otherwise. The significant p-value for the Ljung-box test (p-value = 0.001787) indicates that there is still autocorrelation in the residuals and the model does not capture the structure of the data. 
+
+
+
 ### Q7
 
 Repeat Q3-Q6 for the original series (the complete series that has the seasonal component). Note that when you model the seasonal series, you need to specify the seasonal part of the ARIMA model as well, i.e., $P$, $D$ and $Q$.
 
 ```{r}
 
+ts_plot_og <- autoplot(nat_gas_ts)
+ts_acf_og <- autoplot(Acf(nat_gas_ts, plot= FALSE))
+ts_pacf_og <- autoplot(Pacf(nat_gas_ts, plot= FALSE))
+
+plot_grid(ts_plot_og, ts_acf_og, ts_pacf_og)
+
+print((adf.test(nat_gas_ts,alternative="stationary")))
+
+print(MannKendall(nat_gas_ts))
+#the original series has the same
+
+SARIMA_200100 <- Arima(nat_gas_ts,
+                       order=c(2,0,0),
+                       seasonal=c(1,0,0),
+                       include.drift=FALSE)
+print(SARIMA_200100)
+
+plot_grid(
+  autoplot(SARIMA_200100$residuals),
+  autoplot(Acf(SARIMA_200100$residuals,lag.max=40,plot=FALSE),series="Residuals"),
+  autoplot(Pacf(SARIMA_200100$residuals,lag.max=40,plot=FALSE),series="Residuals"),
+  nrow=1,ncol=3
+)
+
 ```
+
+> Answer: Because the series is stationary, as indicated by the ADF test, differencing was not needed (d = 0). The ACF shows strong autocorrelation and seasonality, while the PACF has two significant spikes before tapering off, indicating an autoregressive component of order p = 2. Additionally, the single spike at lag 12 in the ACF suggests a seasonal component, so a seasonal AR term was included (P = 1). When assessing the residuals of the SARIMA, the residuals appear fairly random, with potential slight seasonality. The ACF and PACF of the residuals support that seasonality was not fully removed from the series, as each had a strong negative spike at lag 12. 
 
 
 ### Q8
@@ -137,7 +196,13 @@ Compare the residual series for Q7 and Q6. Can you tell which ARIMA model is bet
 
 ```{r}
 
+checkresiduals(Model_100)
+checkresiduals(SARIMA_200100)
+
+
 ```
+
+> Answer: The SARIMA model appears to better represent the natural gas series because it explicitly accounts for seasonality, whereas the ARIMA model was fit to a deseasonalized series. However, this is not a completely fair comparison since the models were fit to different versions of the data. The SARIMA model captures both seasonal and non-seasonal patterns, making it more appropriate for the original dataset.
 
 
 ## Checking your model with the auto.arima()
@@ -150,8 +215,10 @@ Use the $auto.arima()$ command on the **deseasonalized series** to let R choose 
 
 ```{r}
 
-```
+print(auto.arima(natgas_deseas))
 
+```
+> The auto.arima results do not match the order I specified in Q4. In Q4 my model was ARIMA(1,0,0), however the order of the autofit model is ARIMA(1,1,1).
 
 ### Q10
 
@@ -159,5 +226,8 @@ Use the $auto.arima()$ command on the **original series** to let R choose the mo
 
 ```{r}
 
+print(auto.arima(nat_gas_ts))
+
 ```
 
+> Answer: The auto.arima results do not match the order I specified in Q7. In Q7 my model was ARIMA(2,0,0)(1,0,0), however the order of the autofit model is ARIMA(1,0,0)(0,1,1). 
