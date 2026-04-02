@@ -4,7 +4,7 @@ author: "Luana Lima"
 output: pdf_document
 always_allow_html: true
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
   markdown: 
     wrap: sentence
 ---
@@ -245,7 +245,6 @@ We will set aside a year of data out-of-sample analysis.
 n_for = 365
 ts_act_power_daily_train <- subset(ts_act_power_daily,
                                    end = length(ts_act_power_daily)-n_for)
-#leaving out the last 365 observations out of the forecast --> so can test the last year
 
 #create a subset for testing purpose
 ts_act_power_daily_test <- subset(ts_act_power_daily,
@@ -382,7 +381,7 @@ For seasonal data, the fitted model is called an NNAR(p,P,k)[m] model, which is 
 NN_fit <- nnetar(ts_act_power_daily_train,
                  p=1,
                  P=0,
-                 xreg=fourier(ts_act_power_daily_train, K=c(2,12))))
+                 xreg=fourier(ts_act_power_daily_train, K=c(2,12)))
 
 #NN_for <- forecast(NN_fit, h=365) 
 NN_for <- forecast(NN_fit, 
@@ -401,9 +400,74 @@ autoplot(ts_act_power_daily) +
   autolayer(NN_for, series="Neural Network",PI=FALSE)+
   ylab("Active Power") 
 
+
 ```
 
-## Checking accuracy of the fo models
+### Model 5: Prophet
+
+```{r}
+#install.packages("prophet")
+library("prophet")
+
+#Prepare data
+pro_act_power_daily <-
+  act_power_daily %>% 
+  rename(ds=Date,y=daily_mean_active_power) %>% 
+  select(ds,y)
+
+nobs <- nrow(pro_act_power_daily)
+
+pro_act_power_daily_train <-
+  pro_act_power_daily[1:(nobs-n_for),]
+
+# Fit model
+Proph_fit <- prophet(pro_act_power_daily_train)
+
+# Create future dataframe (365 days ahead)
+future <- make_future_dataframe(Proph_fit, periods = 365)
+
+# Fit model
+Proph_for <- predict(Proph_fit,future)
+
+#Plot foresting results
+plot(Proph_fit, Proph_for)
+
+
+ggplot() +
+  
+  # Actual data as LINE (not points)
+  geom_line(data = pro_act_power_daily, 
+            aes(x = ds, y = y), 
+            linewidth = 0.8,
+            color="black") +
+  
+  # Forecast line
+  geom_line(data = Proph_for, 
+            aes(x = ds, y = yhat), 
+            linewidth = 1,
+            color="blue") +
+  
+  labs(
+    title = "Prophet Forecast",
+    x = "Date",
+    y = "Active Power"
+  )
+
+#convert forecast in ts object
+Proph_for_ts <- msts(Proph_for$yhat,
+                   start=c(2006,12,16),
+                   seasonal.periods=c(7,365.25))
+                   
+Proph_for_ts <- tail(Proph_for_ts,365)
+
+#Plot model + observed data
+autoplot(ts_act_power_daily) +
+  autolayer(Proph_for_ts, series="Prophet",PI=FALSE)+
+  ylab("Active Power") 
+```
+
+
+## Checking accuracy of the forecasting models
 
 ```{r}
 
@@ -419,6 +483,8 @@ TBATS_scores <- accuracy(TBATS_for$mean,ts_act_power_daily_test)
 # Model 4:  Neural Network 
 NN_scores <- accuracy(NN_for$mean,ts_act_power_daily_test)
 
+# Model 5:  Prophet 
+Prophet_scores <- accuracy(Proph_for_ts,ts_act_power_daily_test)
 
 ```
 
@@ -433,9 +499,9 @@ You can choose one metric to help you choose among models.
 ```{r}
 #create data frame
 scores <- as.data.frame(
-  rbind(ETS_scores, ARIMA_scores, TBATS_scores, NN_scores)
+  rbind(ETS_scores, ARIMA_scores, TBATS_scores, NN_scores, Prophet_scores)
   )
-row.names(scores) <- c("STL+ETS", "ARIMA+Fourier","TBATS","NN")
+row.names(scores) <- c("STL+ETS", "ARIMA+Fourier","TBATS","NN","Prophet")
 
 #choose model with lowest RMSE
 best_model_index <- which.min(scores[,"RMSE"])
@@ -454,7 +520,7 @@ kbl(scores,
   kable_styling(latex_options="striped", stripe_index = which.min(scores[,"RMSE"]))
 ```
 
-TBATS is the best model by RMSE, but ARIMA + Fourier is the best by MAPE.
+Prophet is the best model by RMSE, but ARIMA + Fourier is the best by MAPE.
 Which one to choose when that is the case?
 
 ### Plotting everything together
@@ -473,6 +539,7 @@ autoplot(ts_act_power_daily) +
   autolayer(ARIMA_Four_for, PI=FALSE, series="ARIMA + Fourier") +
   autolayer(TBATS_for,PI=FALSE, series="TBATS") +
   autolayer(NN_for,PI=FALSE, series="NN") +
+  autolayer(Proph_for_ts,PI=FALSE, series="Prophet") +
   xlab("Day") + ylab("Daily Active Power") +
   guides(colour=guide_legend(title="Forecast"))
 ```
@@ -485,6 +552,7 @@ autoplot(ts_act_power_daily_test) +
   autolayer(ARIMA_Four_for, PI=FALSE, series="ARIMA + Fourier") +
   autolayer(TBATS_for,PI=FALSE, series="TBATS") +
   autolayer(NN_for,PI=FALSE, series="NN") +
+  autolayer(Proph_for_ts,PI=FALSE, series="Prophet") +
   ylab("Daily Active Power") +
   guides(colour=guide_legend(title="Forecast"))
 ```
@@ -501,3 +569,4 @@ autoplot(ts_act_power_daily_test) +
 
 -   Try combining the models with a simple average of the forecasts and check the accuracy metrics.
     If that leads to good model, try changing the weights when calculating the average.
+  
